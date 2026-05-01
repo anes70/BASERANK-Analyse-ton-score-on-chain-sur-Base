@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BASERANK — On-chain Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #05080f;
+  --surface: #0a0f1a;
+  --card: #0e1520;
+  --border: #1a2538;
+  --blue: #2563ff;
+  --cyan: #00d4ff;
+  --gold: #f5a623;
+  --silver: #9baab8;
+  --bronze: #cd7c3a;
+  --green: #00e87a;
+  --red: #ff3b5c;
+  --text: #e2eaff;
+  --muted: #3d5470;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(37,99,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(0,212,255,0.05) 0%, transparent 60%);
+  pointer-events:none; z-index:0;
+}
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events:none; z-index:0;
+}
+
+.wrap { max-width:900px; margin:0 auto; padding:2rem 1rem; position:relative; z-index:1; }
+
+/* Header */
+.header { margin-bottom:2.5rem; animation: fadeDown .5s ease; }
+.header-top { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+.title { font-family:var(--font-display); font-size:3.5rem; font-weight:800; line-height:1; letter-spacing:-0.02em; }
+.title span { color:var(--cyan); }
+.subtitle { font-size:.7rem; color:var(--muted); letter-spacing:.25em; text-transform:uppercase; margin-top:.5rem; }
+.live-dot { display:inline-flex; align-items:center; gap:6px; font-size:.65rem; color:var(--green); background:rgba(0,232,122,.08); border:1px solid rgba(0,232,122,.2); border-radius:20px; padding:4px 10px; }
+.dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 1.5s infinite; }
+
+/* Author credit */
+.author-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: .75rem;
+  font-size: .7rem;
+  color: var(--muted);
+  letter-spacing: .05em;
+}
+.author-credit a {
+  color: var(--cyan);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity .2s;
+}
+.author-credit a:hover { opacity: .7; }
+.author-credit::before {
+  content: '✍';
+  font-size: .75rem;
+}
+
+/* Search bar */
+.search-section { display:flex; gap:.75rem; margin-bottom:2rem; animation:fadeUp .4s .1s ease both; }
+.search-wrap { flex:1; position:relative; }
+.search-wrap input {
+  width:100%;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:.75rem 1rem .75rem 2.75rem;
+  color:var(--text);
+  font-family:var(--font-mono);
+  font-size:.85rem;
+  outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.search-wrap input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,255,.15); }
+.search-wrap input::placeholder { color:var(--muted); }
+.search-icon { position:absolute; left:.85rem; top:50%; transform:translateY(-50%); font-size:.9rem; opacity:.5; }
+.btn-add {
+  background:var(--blue);
+  color:white;
+  border:none;
+  border-radius:10px;
+  padding:.75rem 1.25rem;
+  font-family:var(--font-mono);
+  font-size:.8rem;
+  cursor:pointer;
+  letter-spacing:.05em;
+  white-space:nowrap;
+  transition:all .2s;
+}
+.btn-add:hover { background:#1d4fd8; transform:translateY(-1px); }
+.btn-add:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+/* Legend */
+.legend { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1.5rem; animation:fadeUp .4s .15s ease both; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:.65rem; color:var(--muted); letter-spacing:.1em; }
+.legend-dot { width:8px; height:8px; border-radius:2px; }
+
+/* Table header */
+.table-header {
+  display:grid;
+  grid-template-columns: 48px 1fr 90px 90px 90px 90px 100px;
+  gap:.5rem;
+  padding:.5rem 1rem;
+  font-size:.6rem;
+  color:var(--muted);
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+  margin-bottom:.5rem;
+  animation:fadeUp .4s .2s ease both;
+}
+
+/* Rows */
+.lb-list { display:flex; flex-direction:column; gap:.5rem; }
+.lb-row {
+  display:grid;
+  grid-template-columns: 48px 1fr 90px 90px 90px 90px 100px;
+  gap:.5rem;
+  align-items:center;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:.85rem 1rem;
+  transition:all .2s;
+  animation:fadeUp .4s ease both;
+}
+.lb-row:hover { border-color:rgba(37,99,255,.3); background:#111828; transform:translateX(2px); }
+.lb-row.rank-1 { border-color:rgba(245,166,35,.3); background:rgba(245,166,35,.04); }
+.lb-row.rank-2 { border-color:rgba(155,170,184,.2); }
+.lb-row.rank-3 { border-color:rgba(205,124,58,.2); }
+
+.rank { font-family:var(--font-display); font-size:1.1rem; font-weight:800; text-align:center; }
+.rank-1 .rank { color:var(--gold); }
+.rank-2 .rank { color:var(--silver); }
+.rank-3 .rank { color:var(--bronze); }
+
+.wallet-cell { min-width:0; }
+.wallet-addr { font-size:.8rem; color:var(--cyan); }
+.wallet-label { font-size:.65rem; color:var(--muted); margin-top:2px; }
+
+.metric { text-align:right; }
+.metric-val { font-size:.85rem; font-weight:500; }
+.metric-sub { font-size:.6rem; color:var(--muted); margin-top:1px; }
+
+.score-cell { text-align:right; }
+.score-val { font-family:var(--font-display); font-size:1.3rem; font-weight:800; }
+.score-bar-wrap { height:3px; background:var(--border); border-radius:2px; margin-top:4px; }
+.score-bar { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--blue),var(--cyan)); transition:width .8s ease; }
+
+.loading-row {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:1.5rem;
+  text-align:center;
+  color:var(--muted);
+  font-size:.8rem;
+  animation:pulse 1.5s infinite;
+}
+
+.empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
+.empty-icon { font-size:3rem; margin-bottom:1rem; }
+.empty-title { font-family:var(--font-display); font-size:1.2rem; color:var(--text); margin-bottom:.5rem; }
+.empty-sub { font-size:.75rem; line-height:1.6; }
+
+.error-msg { color:var(--red); font-size:.75rem; text-align:center; padding:.75rem; background:rgba(255,59,92,.06); border:1px solid rgba(255,59,92,.2); border-radius:8px; margin-top:.5rem; }
+
+.tier { display:inline-block; font-size:.55rem; padding:2px 6px; border-radius:4px; letter-spacing:.1em; font-weight:500; margin-top:3px; }
+.tier-s { background:rgba(245,166,35,.15); color:var(--gold); border:1px solid rgba(245,166,35,.3); }
+.tier-a { background:rgba(0,212,255,.1); color:var(--cyan); border:1px solid rgba(0,212,255,.2); }
+.tier-b { background:rgba(37,99,255,.1); color:#7ba7ff; border:1px solid rgba(37,99,255,.2); }
+.tier-c { background:rgba(255,255,255,.04); color:var(--muted); border:1px solid var(--border); }
+
+/* Footer */
+.footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  animation: fadeUp .4s .4s ease both;
+}
+.footer-credit {
+  font-size: .65rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.footer-credit a { color: var(--cyan); text-decoration: none; }
+.footer-credit a:hover { text-decoration: underline; }
+.footer-built {
+  font-size: .65rem;
+  color: var(--muted);
+  text-align: right;
+}
+.footer-built strong { color: var(--text); }
+
+@keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+@media(max-width:700px){
+  .table-header,.lb-row { grid-template-columns:40px 1fr 70px 70px 90px; }
+  .col-nfts,.col-vol { display:none; }
+  .title { font-size:2.5rem; }
+  .footer { flex-direction:column; }
+  .footer-built { text-align:left; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="title">BASE<span>RANK</span></div>
+        <div class="subtitle">On-chain leaderboard — Base Mainnet</div>
+        <div class="author-credit">
+          Rédigé par <a href="https://rainbow.me/irezroifer.base.eth" target="_blank">irezroifer.base.eth</a>
+        </div>
+      </div>
+      <div class="live-dot"><div class="dot"></div> LIVE DATA</div>
+    </div>
+  </div>
+
+  <div class="search-section">
+    <div class="search-wrap">
+      <span class="search-icon">⬡</span>
+      <input type="text" id="addr-input" placeholder="0x... — Ajoute un wallet au leaderboard" maxlength="42" />
+    </div>
+    <button class="btn-add" id="add-btn" onclick="addWallet()">+ Analyser</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#f5a623"></div> Transactions</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00d4ff"></div> Contrats déployés</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00e87a"></div> NFTs</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2563ff"></div> Score global</div>
+  </div>
+
+  <div class="table-header">
+    <div>#</div>
+    <div>WALLET</div>
+    <div style="text-align:right">TXS</div>
+    <div style="text-align:right" class="col-nfts">CONTRATS</div>
+    <div style="text-align:right" class="col-vol">ETH VOL.</div>
+    <div style="text-align:right">NFTs</div>
+    <div style="text-align:right">SCORE</div>
+  </div>
+
+  <div class="lb-list" id="lb-list">
+    <div class="empty">
+      <div class="empty-icon">⬡</div>
+      <div class="empty-title">Leaderboard vide</div>
+      <div class="empty-sub">Ajoute une adresse wallet ci-dessus<br>pour analyser son score on-chain sur Base</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-credit">
+      Données via <a href="https://basescan.org" target="_blank">Basescan API</a> — Base Mainnet<br>
+      Score = Txs × 1 + Contrats × 50 + ETH vol. × 10 + NFTs × 5
+    </div>
+    <div class="footer-built">
+      Construit par<br>
+      <strong><a href="https://rainbow.me/irezroifer.base.eth" target="_blank" style="color:var(--cyan);text-decoration:none;">irezroifer.base.eth</a></strong>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIG — Clé API Basescan gratuite sur basescan.org/apis
+// ============================================================
+const BASESCAN_KEY = "YourApiKeyToken";
+
+let wallets = [];
+
+function calcScore(data) {
+  return (data.txCount || 0) * 1
+       + (data.contractsDeployed || 0) * 50
+       + Math.floor((data.ethVolume || 0) * 10)
+       + (data.nftCount || 0) * 5;
+}
+
+function getTier(score) {
+  if (score >= 1000) return ['S', 'tier-s'];
+  if (score >= 500)  return ['A', 'tier-a'];
+  if (score >= 100)  return ['B', 'tier-b'];
+  return ['C', 'tier-c'];
+}
+
+function shortAddr(addr) {
+  return addr.slice(0,6) + '...' + addr.slice(-4);
+}
+
+async function fetchWalletData(address) {
+  const base = `https://api.basescan.org/api`;
+
+  const txRes = await fetch(`${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${BASESCAN_KEY}`);
+  const txData = await txRes.json();
+  const txs = txData.result || [];
+  const txCount = Array.isArray(txs) ? txs.length : 0;
+  const contractsDeployed = Array.isArray(txs) ? txs.filter(tx => tx.to === '' || tx.to === null).length : 0;
+  const ethVolume = Array.isArray(txs) ? Math.floor(txs.reduce((acc, tx) => acc + parseFloat(tx.value || 0) / 1e18, 0) * 100) / 100 : 0;
+
+  const balRes = await fetch(`${base}?module=account&action=balance&address=${address}&apikey=${BASESCAN_KEY}`);
+  const balData = await balRes.json();
+  const ethBalance = balData.result ? (parseFloat(balData.result) / 1e18).toFixed(4) : '0';
+
+  const nftRes = await fetch(`${base}?module=account&action=tokennfttx&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${BASESCAN_KEY}`);
+  const nftData = await nftRes.json();
+  const nftCount = Array.isArray(nftData.result) ? nftData.result.length : 0;
+
+  return { txCount, contractsDeployed, ethVolume, ethBalance, nftCount };
+}
+
+async function addWallet() {
+  const input = document.getElementById('addr-input');
+  const addr = input.value.trim();
+
+  if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+    showError("Adresse invalide. Format: 0x suivi de 40 caractères hex."); return;
+  }
+  if (wallets.find(w => w.address.toLowerCase() === addr.toLowerCase())) {
+    showError("Ce wallet est déjà dans le leaderboard."); return;
+  }
+
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true;
+  btn.textContent = "Analyse...";
+  clearError();
+
+  const list = document.getElementById('lb-list');
+  if (list.querySelector('.empty')) list.innerHTML = '';
+
+  const tempId = 'loading-' + Date.now();
+  const loadDiv = document.createElement('div');
+  loadDiv.className = 'loading-row';
+  loadDiv.id = tempId;
+  loadDiv.textContent = `⬡ Analyse de ${shortAddr(addr)} en cours...`;
+  list.appendChild(loadDiv);
+
+  try {
+    const data = await fetchWalletData(addr);
+    const score = calcScore(data);
+    wallets.push({ address: addr, ...data, score });
+    wallets.sort((a, b) => b.score - a.score);
+    renderLeaderboard();
+    input.value = '';
+  } catch(e) {
+    document.getElementById(tempId)?.remove();
+    if (wallets.length === 0) showEmpty();
+    showError("Erreur API: " + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "+ Analyser";
+}
+
+function renderLeaderboard() {
+  const list = document.getElementById('lb-list');
+  const maxScore = wallets[0]?.score || 1;
+
+  list.innerHTML = wallets.map((w, i) => {
+    const rank = i + 1;
+    const rankClass = rank <= 3 ? `rank-${rank}` : '';
+    const [tier, tierClass] = getTier(w.score);
+    const barW = Math.round((w.score / maxScore) * 100);
+    const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    const scoreColor = rank===1?'var(--gold)':rank===2?'var(--silver)':rank===3?'var(--bronze)':'var(--cyan)';
+
+    return `
+    <div class="lb-row ${rankClass}" style="animation-delay:${i*0.05}s">
+      <div class="rank">${rankEmoji}</div>
+      <div class="wallet-cell">
+        <div class="wallet-addr">${shortAddr(w.address)}</div>
+        <div class="wallet-label">${w.ethBalance} ETH</div>
+        <span class="tier ${tierClass}">TIER ${tier}</span>
+      </div>
+      <div class="metric">
+        <div class="metric-val" style="color:#f5a623">${w.txCount.toLocaleString()}</div>
+        <div class="metric-sub">txs</div>
+      </div>
+      <div class="metric col-nfts">
+        <div class="metric-val" style="color:#00d4ff">${w.contractsDeployed}</div>
+        <div class="metric-sub">contrats</div>
+      </div>
+      <div class="metric col-vol">
+        <div class="metric-val" style="color:#00e87a">${w.ethVolume}</div>
+        <div class="metric-sub">ETH vol.</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" style="color:#00e87a">${w.nftCount}</div>
+        <div class="metric-sub">NFTs</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-val" style="color:${scoreColor}">${w.score.toLocaleString()}</div>
+        <div class="score-bar-wrap"><div class="score-bar" style="width:${barW}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showEmpty() {
+  document.getElementById('lb-list').innerHTML = `
+    <div class="empty">
+      <div class="empty-icon">⬡</div>
+      <div class="empty-title">Leaderboard vide</div>
+      <div class="empty-sub">Ajoute une adresse wallet ci-dessus<br>pour analyser son score on-chain sur Base</div>
+    </div>`;
+}
+
+function showError(msg) {
+  clearError();
+  const err = document.createElement('div');
+  err.className = 'error-msg'; err.id = 'err-msg';
+  err.textContent = msg;
+  document.querySelector('.search-section').after(err);
+}
+
+function clearError() { document.getElementById('err-msg')?.remove(); }
+
+document.getElementById('addr-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addWallet();
+});
+</script>
+</body>
+</html>
