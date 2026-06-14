@@ -128,9 +128,9 @@ body {
 .sybil-info-title { font-size: 0.85rem; font-weight: 600; }
 .sybil-info-desc { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 .risk-badge { font-size: 0.7rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; letter-spacing: 0.05em; }
-.risk-low { background: rgba(0, 232, 122, 0.1); color: var(--green); border: 1px solid rgba(0, 232, 122, 0.2); }
-.risk-medium { background: rgba(245, 166, 35, 0.1); color: var(--amber); border: 1px solid rgba(245, 166, 35, 0.2); }
-.risk-high { background: rgba(255, 59, 92, 0.1); color: var(--red); border: 1px solid rgba(255, 59, 92, 0.2); }
+.risk-FAIBLE { background: rgba(0, 232, 122, 0.1); color: var(--green); border: 1px solid rgba(0, 232, 122, 0.2); }
+.risk-MODÉRÉ { background: rgba(245, 166, 35, 0.1); color: var(--amber); border: 1px solid rgba(245, 166, 35, 0.2); }
+.risk-ÉLEVÉ { background: rgba(255, 59, 92, 0.1); color: var(--red); border: 1px solid rgba(255, 59, 92, 0.2); }
 
 /* Common States */
 .state-box { text-align: center; padding: 4rem 1rem; color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; }
@@ -146,6 +146,7 @@ body {
 .footer a { color: var(--base-blue); text-decoration: none; }
 
 @keyframes loadBar { 0% { width: 0; margin-left: 0; } 50% { width: 100%; margin-left: 0; } 100% { width: 0; margin-left: 100%; } }
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 </style>
 </head>
 <body>
@@ -256,45 +257,24 @@ body {
     </div>
 
     <div class="footer">
-      <div>Data Feed: Multi-Node Base RPC & <a href="https://base.blockscout.com" target="_blank">Blockscout Core</a></div>
+      <div>Data Feed: <a href="https://mainnet.base.org" target="_blank">Base RPC Node</a> & <a href="https://base.blockscout.com" target="_blank">Blockscout Core</a></div>
       <div>Engine Built by <strong><a href="https://rainbow.me/irezroifer.base.eth" target="_blank">irezroifer.base.eth</a></strong></div>
     </div>
   </div>
 
 <script>
-// Pool de secours anti-blocage (Rotation automatique si un RPC sature)
-const RPC_POOL = [
-  "https://mainnet.base.org",
-  "https://base.llamarpc.com",
-  "https://1rpc.io/base",
-  "https://base-mainnet.public.blastapi.io"
-];
+const BASE_RPC = "https://mainnet.base.org";
 const BLOCKSCOUT = "https://base.blockscout.com/api";
 
-// Exécuteur RPC robuste avec fallback automatique
 async function rpc(method, params) {
-  for (const url of RPC_POOL) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s max par nœud
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data.error) continue;
-      return data.result;
-    } catch (e) {
-      continue; // Erreur ou timeout, on passe au RPC suivant
-    }
-  }
-  throw new Error("Tous les serveurs RPC de Base sont saturés. Réessaye dans quelques secondes.");
+  const res = await fetch(BASE_RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.result;
 }
 
 async function fetchDetailedData(address) {
@@ -359,17 +339,14 @@ async function fetchDetailedData(address) {
   if (ethBalance < 0.0005) trustPoints -= 5;
   score += Math.max(0, trustPoints);
 
-  let sybilRisk = "low";
-  let sybilLabel = "FAIBLE";
-  let sybilDesc = "Comportement on-chain organique et sain. Risque de détection minime.";
+  let sybilRisk = "FAIBLE";
+  let sybilDesc = "Comportement on-chain organique et sain. Risque de filtre minime.";
 
   if (trustPoints <= 5) {
-    sybilRisk = "high";
-    sybilLabel = "ÉLEVÉ";
+    sybilRisk = "ÉLEVÉ";
     sybilDesc = "Alerte : Portefeuille trop jeune, sous-financé ou inactif.";
   } else if (trustPoints < 20) {
-    sybilRisk = "medium";
-    sybilLabel = "MODÉRÉ";
+    sybilRisk = "MODÉRÉ";
     sybilDesc = "Activité irrégulière. Renforce tes interactions mensuelles.";
   }
 
@@ -382,9 +359,83 @@ async function fetchDetailedData(address) {
     walletAgeDays,
     score,
     sybilRisk,
-    sybilLabel,
     sybilDesc
   };
 }
 
-function getTierLabel(score)
+function getTierLabel(score) {
+  if (score >= 80) return 'Tier S — Advanced Core';
+  if (score >= 50) return 'Tier A — Active User';
+  if (score >= 20) return 'Tier B — Standard Commuter';
+  return 'Tier C — Inactive Account';
+}
+
+async function analyzeWallet() {
+  const input = document.getElementById('addr-input');
+  const addr = input.value.trim();
+  const errBox = document.getElementById('error-display');
+
+  if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+    errBox.innerText = "⚠ Format d'adresse invalide (0x + 40 hex).";
+    errBox.style.display = "block";
+    return;
+  }
+
+  const btn = document.getElementById('add-btn');
+  const emptyState = document.getElementById('empty-state');
+  const loadingState = document.getElementById('loading-state');
+  const reportTemplate = document.getElementById('report-template');
+  const contextBar = document.getElementById('context-bar');
+
+  btn.disabled = true;
+  btn.textContent = "Processing...";
+  errBox.style.display = "none";
+  if (emptyState) emptyState.style.display = 'none';
+  reportTemplate.style.display = 'none';
+  contextBar.style.display = 'none';
+  loadingState.style.display = 'block';
+
+  try {
+    const data = await fetchDetailedData(addr);
+
+    // Setup Context Bar details
+    document.getElementById('sub-bar-wallet-address').innerText = addr;
+    document.getElementById('sub-bar-eth').innerText = `${data.ethBalance} ETH`;
+    document.getElementById('sub-bar-link').href = `https://basescan.org/address/${addr}`;
+    contextBar.style.display = 'flex';
+
+    // Injection values
+    document.getElementById('m-txs').innerText = data.txCount.toLocaleString();
+    document.getElementById('m-contracts').innerText = data.contractsDeployed;
+    document.getElementById('m-nfts').innerHTML = `${data.nftCount} <span>items</span>`;
+    document.getElementById('m-eth').innerHTML = `${data.ethBalance} <span>ETH</span>`;
+    document.getElementById('m-tokens').innerHTML = `${data.tokenCount} <span>tokens</span>`;
+    document.getElementById('m-age').innerHTML = `${data.walletAgeDays} <span>jours</span>`;
+    
+    document.getElementById('final-score-val').innerText = data.score;
+    document.getElementById('tier-badge').innerText = getTierLabel(data.score);
+
+    const badge = document.getElementById('sybil-risk-badge');
+    badge.className = `risk-badge risk-${data.sybilRisk}`;
+    badge.innerText = `RISQUE ${data.sybilRisk}`;
+    document.getElementById('sybil-explanation').innerText = data.sybilDesc;
+
+    loadingState.style.display = 'none';
+    reportTemplate.style.display = 'flex';
+  } catch(e) {
+    loadingState.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'block';
+    errBox.innerText = "⚠ Network failure: " + e.message;
+    errBox.style.display = "block";
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Analyze →";
+}
+
+document.getElementById('addr-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') analyzeWallet();
+});
+</script>
+</body>
+</html>
