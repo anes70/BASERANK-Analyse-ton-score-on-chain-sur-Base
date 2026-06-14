@@ -3,453 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BASERANK v2 — Analyseur de score on-chain & Profil Anti-Sybil</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Base Airdrop Simulator — Analyseur On-Chain</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #05080f;
-  --surface: #0a0f1a;
-  --card: #0e1520;
-  --border: #1a2538;
-  --blue: #2563ff;
-  --cyan: #00d4ff;
-  --gold: #f5a623;
+  --bg: #0a0b0d;
+  --card: #14161b;
+  --card-sub: #1b1e24;
+  --border: #222630;
+  --base-blue: #0052ff;
+  --base-blue-hover: #0046d5;
+  --text: #ffffff;
+  --muted: #8a93a6;
+  --amber: #f5a623;
   --green: #00e87a;
   --red: #ff3b5c;
-  --text: #e2eaff;
-  --muted: #3d5470;
-  --font-display: 'Syne', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font: 'Inter', sans-serif;
 }
+
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-mono);
+  font-family: var(--font);
   min-height: 100vh;
+  padding-bottom: 3rem;
+}
+
+/* Hero Top Banner with Digital Matrix Pattern */
+.hero-banner {
+  background: linear-gradient(180deg, rgba(0, 82, 255, 0.15) 0%, transparent 100%), #0a0b0d;
   position: relative;
-  overflow-x: hidden;
+  border-bottom: 1px solid var(--border);
+  padding: 3rem 0;
+  overflow: hidden;
 }
-body::before {
-  content:'';
-  position:fixed; inset:0;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(37,99,255,0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(0,212,255,0.05) 0%, transparent 60%);
-  pointer-events:none; z-index:0;
-}
-body::after {
-  content:'';
-  position:fixed; inset:0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
-  pointer-events:none; z-index:0;
+.hero-banner::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(0, 82, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 82, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
 }
 
-.wrap { max-width:800px; margin:0 auto; padding:2rem 1rem; position:relative; z-index:1; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
 
-.header { margin-bottom:2rem; animation: fadeDown .5s ease; }
-.header-top { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
-.title { font-family:var(--font-display); font-size:3.5rem; font-weight:800; line-height:1; letter-spacing:-0.02em; }
-.title span { color:var(--cyan); }
-.subtitle { font-size:.7rem; color:var(--muted); letter-spacing:.25em; text-transform:uppercase; margin-top:.4rem; }
-.author { font-size:.7rem; color:var(--muted); margin-top:.4rem; }
-.author a { color:var(--cyan); text-decoration:none; }
-.live-dot { display:inline-flex; align-items:center; gap:6px; font-size:.65rem; color:var(--green); background:rgba(0,232,122,.08); border:1px solid rgba(0,232,122,.2); border-radius:20px; padding:4px 10px; }
-.dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 1.5s infinite; }
-
-/* Search */
-.search-section { display:flex; gap:.75rem; margin-bottom:1.5rem; animation:fadeUp .4s .1s ease both; }
-.search-wrap { flex:1; position:relative; }
-.search-wrap input {
-  width:100%; background:var(--card); border:1px solid var(--border); border-radius:10px;
-  padding:.75rem 1rem .75rem 2.75rem; color:var(--text); font-family:var(--font-mono);
-  font-size:.85rem; outline:none; transition:border-color .2s, box-shadow .2s;
+/* Header Elements */
+.header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.brand-box { display: flex; align-items: center; gap: 1rem; }
+.base-logo {
+  width: 48px; height: 48px; background: var(--base-blue); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 82, 255, 0.3);
 }
-.search-wrap input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,255,.15); }
-.search-wrap input::placeholder { color:var(--muted); }
-.search-icon { position:absolute; left:.85rem; top:50%; transform:translateY(-50%); font-size:.9rem; opacity:.5; }
-.btn-add {
-  background:var(--blue); color:white; border:none; border-radius:10px;
-  padding:.75rem 1.25rem; font-family:var(--font-mono); font-size:.8rem;
-  cursor:pointer; letter-spacing:.05em; white-space:nowrap; transition:all .2s;
-}
-.btn-add:hover { background:#1d4fd8; transform:translateY(-1px); }
-.btn-add:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+.base-logo-circle { width: 22px; height: 22px; border: 4px solid white; border-radius: 50%; }
 
-/* Info banner */
-.info-banner {
-  background:rgba(37,99,255,.06); border:1px solid rgba(37,99,255,.2); border-radius:10px;
-  padding:.75rem 1rem; font-size:.7rem; color:#7ba7ff; margin-bottom:1.5rem; line-height:1.6;
-  animation:fadeUp .4s .15s ease both;
-}
-.info-banner strong { color:var(--cyan); }
+.title { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+.subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+.author { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+.author a { color: var(--base-blue); text-decoration: none; font-weight: 500; }
 
-/* Report Card Container */
-.report-container { display:none; flex-direction:column; gap:1.5rem; animation:fadeUp .5s ease; }
-
-.report-card {
-  background:var(--card); border:1px solid var(--border); border-radius:16px; padding:2rem;
-  display:grid; grid-template-columns: 1fr 200px; gap:2rem; align-items:center;
+.badge-speculative {
+  background: rgba(245, 166, 35, 0.1); border: 1px solid rgba(245, 166, 35, 0.3);
+  color: var(--amber); font-size: 0.7rem; font-weight: 600; padding: 6px 12px; border-radius: 20px;
+  display: flex; align-items: center; gap: 4px;
 }
 
-.metrics-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:1.25rem; }
-.metric-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1rem; }
-.metric-label { font-size:.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
-.metric-value { font-size:1.4rem; font-weight:700; color:var(--text); margin-top:0.25rem; }
-.metric-value span { font-size:0.8rem; color:var(--muted); font-weight:400; }
+/* Main Container Box */
+.main-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-top: -1.5rem; position: relative; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
-.score-box {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  border-left:1px solid var(--border); padding-left:2rem; text-align:center;
+.section-label { font-size: 0.65rem; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem; }
+
+/* Input field layout */
+.search-row { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+.input-wrap { flex: 1; position: relative; }
+.input-wrap input {
+  width: 100%; background: var(--card-sub); border: 1px solid var(--border); border-radius: 10px;
+  padding: 1rem 1.25rem; color: var(--text); font-family: var(--font); font-size: 0.9rem; outline: none;
+  transition: border-color 0.2s;
 }
-.score-big { font-family:var(--font-display); font-size:4rem; font-weight:800; color:var(--gold); line-height:1; }
-.score-max { font-size:1rem; color:var(--muted); margin-top:0.25rem; font-weight:700; }
-.score-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.5rem; }
+.input-wrap input:focus { border-color: var(--base-blue); }
 
-/* Sybil Banner */
-.sybil-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius:12px; padding:1.2rem;
-  display:flex; justify-content:space-between; align-items:center;
+.btn-analyze {
+  background: var(--base-blue); color: white; border: none; border-radius: 10px;
+  padding: 0 1.75rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
 }
-.sybil-title { font-size:0.8rem; font-weight:700; }
-.sybil-desc { font-size:0.7rem; color:var(--muted); margin-top:2px; }
-.sybil-badge { font-size:0.75rem; font-weight:700; padding:6px 12px; border-radius:6px; letter-spacing:0.05em; }
-.risk-low { background:rgba(0,232,122,.1); color:var(--green); border:1px solid rgba(0,232,122,.2); }
-.risk-medium { background:rgba(245,166,35,.1); color:var(--gold); border:1px solid rgba(245,166,35,.2); }
-.risk-high { background:rgba(255,59,92,.1); color:var(--red); border:1px solid rgba(255,59,92,.2); }
+.btn-analyze:hover { background: var(--base-blue-hover); }
+.btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* States */
-.loading-box {
-  display:none; background:var(--card); border:1px solid var(--border); border-radius:10px;
-  padding:2rem; text-align:center; color:var(--muted); font-size:.8rem;
+/* Sub Address Utility Row */
+.address-sub-bar {
+  display: none; background: var(--card-sub); border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.75rem 1rem; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.8rem;
 }
-.loading-inner { display:flex; flex-direction:column; gap:.75rem; align-items:center; }
-.progress-bar { width:200px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
-.progress-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--cyan)); animation:progress 2s ease infinite; }
+.sub-bar-addr { color: var(--muted); font-family: monospace; }
+.sub-bar-right { display: flex; align-items: center; gap: 1rem; }
+.eth-badge { background: #222630; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+.link-basescan { color: var(--base-blue); text-decoration: none; font-weight: 500; }
 
-.empty { text-align:center; padding:4rem 1rem; color:var(--muted); border: 1px dashed var(--border); border-radius:16px; }
-.empty-icon { font-size:3rem; margin-bottom:1rem; opacity:0.3; }
-.empty-title { font-family:var(--font-display); font-size:1.2rem; color:var(--text); margin-bottom:.5rem; }
+/* Pseudo Tab Switcher Style */
+.tab-bar { display: flex; background: var(--card-sub); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 1.5rem; }
+.tab-item { flex: 1; text-align: center; padding: 0.6rem; font-size: 0.8rem; font-weight: 600; color: var(--muted); border-radius: 8px; cursor: pointer; }
+.tab-item.active { background: var(--base-blue); color: white; }
 
-.error-msg { color:var(--red); font-size:.75rem; text-align:center; padding:.75rem; background:rgba(255,59,92,.06); border:1px solid rgba(255,59,92,.2); border-radius:8px; margin-top:.5rem; }
+/* Report Cards */
+.report-layout { display: none; flex-direction: column; gap: 1.25rem; }
+.metrics-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.metric-card { background: var(--card-sub); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+.m-title { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.m-value { font-size: 1.5rem; font-weight: 700; margin-top: 0.4rem; }
+.m-value span { font-size: 0.85rem; color: var(--muted); font-weight: 400; }
+
+/* Big Score Header inside Report */
+.score-hero-box {
+  background: linear-gradient(90deg, rgba(0, 82, 255, 0.1) 0%, transparent 100%);
+  border: 1px solid var(--border); border-left: 4px solid var(--base-blue);
+  border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center;
+}
+.score-hero-left .score-num { font-size: 3rem; font-weight: 800; color: white; line-height: 1; }
+.score-hero-left .score-max { font-size: 0.9rem; color: var(--muted); margin-top: 0.25rem; }
+.score-tier-label { font-size: 0.8rem; font-weight: 700; color: var(--base-blue); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Sybil Security Card */
+.sybil-status-box { border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.sybil-info-title { font-size: 0.85rem; font-weight: 600; }
+.sybil-info-desc { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+.risk-badge { font-size: 0.7rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; letter-spacing: 0.05em; }
+.risk-FAIBLE { background: rgba(0, 232, 122, 0.1); color: var(--green); border: 1px solid rgba(0, 232, 122, 0.2); }
+.risk-MODÉRÉ { background: rgba(245, 166, 35, 0.1); color: var(--amber); border: 1px solid rgba(245, 166, 35, 0.2); }
+.risk-ÉLEVÉ { background: rgba(255, 59, 92, 0.1); color: var(--red); border: 1px solid rgba(255, 59, 92, 0.2); }
+
+/* Common States */
+.state-box { text-align: center; padding: 4rem 1rem; color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; }
+.state-icon { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.4; }
+.loading-box { display: none; text-align: center; padding: 3rem 1rem; color: var(--muted); }
+.progress-line { width: 150px; height: 2px; background: var(--border); margin: 1rem auto 0; border-radius: 2px; overflow: hidden; }
+.progress-line-fill { height: 100%; background: var(--base-blue); animation: loadBar 1.5s infinite ease-in-out; }
+
+.error-card { color: var(--red); font-size: 0.8rem; padding: 1rem; background: rgba(255,59,92,0.06); border: 1px solid rgba(255,59,92,0.2); border-radius: 10px; margin-bottom: 1.5rem; display: none; }
 
 /* Footer */
-.footer {
-  margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
-  display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:1rem; font-size:.65rem; color:var(--muted);
-}
-.footer a { color:var(--cyan); text-decoration:none; }
-.footer-right { text-align:right; }
-.footer-right strong { color:var(--text); }
+.footer { margin-top: 3rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.7rem; color: var(--muted); }
+.footer a { color: var(--base-blue); text-decoration: none; }
 
-@keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
-@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-@keyframes progress { 0%{width:0;margin-left:0} 50%{width:100%;margin-left:0} 100%{width:0;margin-left:100%} }
-
-@media(max-width:700px){
-  .report-card { grid-template-columns: 1fr; }
-  .score-box { border-left:none; border-top:1px solid var(--border); padding-left:0; padding-top:1.5rem; }
-  .title { font-size:2.2rem; }
-}
-</style>
-</head>
-<body>
-<div class="wrap">
-
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <div class="title">BASE<span>RANK</span></div>
-        <div class="subtitle">On-chain Wallet Scanner — Score sur 100</div>
-        <div class="author">✍ Rédigé par <a href="https://rainbow.me/irezroifer.base.eth" target="_blank">irezroifer.base.eth</a></div>
-      </div>
-      <div class="live-dot"><div class="dot"></div> BASE MAINNET</div>
-    </div>
-  </div>
-
-  <div class="info-banner">
-    <strong>Analyse Individuelle Avancée</strong> — Scanne en temps réel l'âge du portefeuille, l'activité transactionnelle, les déploiements de contrats, les collections NFTs et calcule la probabilité de détection Sybil.
-  </div>
-
-  <div class="search-section">
-    <div class="search-wrap">
-      <span class="search-icon">⬡</span>
-      <input type="text" id="addr-input" placeholder="0x... — Entre une adresse wallet Base à auditer" maxlength="42" />
-    </div>
-    <button class="btn-add" id="add-btn" onclick="analyzeWallet()">+ Analyser</button>
-  </div>
-
-  <!-- Main Display Area -->
-  <div id="display-area">
-    <div class="empty" id="empty-state">
-      <div class="empty-icon">⬡</div>
-      <div class="empty-title">Aucune analyse en cours</div>
-      <div class="empty-sub">Colle une adresse de portefeuille Base ci-dessus pour inspecter son score de confiance.</div>
-    </div>
-  </div>
-
-  <!-- Loading State Element -->
-  <div class="loading-box" id="loading-state">
-    <div class="loading-inner">
-      <span id="loading-text">⬡ Extraction des rapports cryptographiques depuis le RPC Base...</span>
-      <div class="progress-bar"><div class="progress-fill"></div></div>
-    </div>
-  </div>
-
-  <!-- Report Component Blueprint (Hidden Template) -->
-  <div class="report-container" id="report-template">
-    <div class="sybil-card">
-      <div>
-        <div class="sybil-title">Analyse algorithmique Anti-Sybil</div>
-        <div class="sybil-desc" id="sybil-explanation">Calcul de l'historique de distribution et de régularité du comportement.</div>
-      </div>
-      <div class="sybil-badge" id="sybil-risk-badge">RISQUE INCONNU</div>
-    </div>
-
-    <div class="report-card">
-      <div class="metrics-grid">
-        <div class="metric-box">
-          <div class="metric-label">Transactions Envoyées</div>
-          <div class="metric-value" id="m-txs">0</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">Contrats Déployés</div>
-          <div class="metric-value" id="m-contracts">0</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">NFTs Collectés</div>
-          <div class="metric-value" id="m-nfts">0 <span>items</span></div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">Solde Ethereum</div>
-          <div class="metric-value" id="m-eth">0.0000 <span>ETH</span></div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">Tokens ERC-20</div>
-          <div class="metric-value" id="m-tokens">0 <span>actifs</span></div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">Âge du Portefeuille</div>
-          <div class="metric-value" id="m-age">0 <span>jours</span></div>
-        </div>
-      </div>
-
-      <div class="score-box">
-        <div class="score-big" id="final-score-val">0</div>
-        <div class="score-max">/ 100</div>
-        <div class="score-label" id="tier-badge">TIER INCONNU</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <div>
-      Données via <a href="https://mainnet.base.org" target="_blank">Base RPC</a> + <a href="https://base.blockscout.com" target="_blank">Blockscout API</a><br>
-      Analyse de confiance normalisée sans clé API requise.
-    </div>
-    <div class="footer-right">
-      Construit avec fierté par<br>
-      <strong><a href="https://rainbow.me/irezroifer.base.eth" target="_blank" style="color:var(--cyan);text-decoration:none;">irezroifer.base.eth</a></strong>
-    </div>
-  </div>
-
-</div>
-
-<script>
-const BASE_RPC = "https://mainnet.base.org";
-const BLOCKSCOUT = "https://base.blockscout.com/api";
-
-async function rpc(method, params) {
-  const res = await fetch(BASE_RPC, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.result;
-}
-
-async function fetchDetailedData(address) {
-  // 1. ETH Balance (RPC)
-  const balHex = await rpc("eth_getBalance", [address, "latest"]);
-  const ethBalance = parseInt(balHex, 16) / 1e18;
-
-  // 2. Transactions Count via Nonce (RPC)
-  const nonceHex = await rpc("eth_getTransactionCount", [address, "latest"]);
-  const txCount = parseInt(nonceHex, 16);
-
-  let contractsDeployed = 0;
-  let erc20Count = 0;
-  let nftCount = 0;
-  let walletAgeDays = 0;
-
-  // 3. Scan de la liste des Jetons et Séparation Jeton VS NFT (Blockscout)
-  try {
-    const tokRes = await fetch(`${BLOCKSCOUT}?module=account&action=tokenlist&address=${address}`);
-    const tokData = await tokRes.json();
-    if (tokData.status === "1" && Array.isArray(tokData.result)) {
-      tokData.result.forEach(token => {
-        if (token.type === "ERC-721" || token.type === "ERC-1155") {
-          nftCount++;
-        } else {
-          erc20Count++;
-        }
-      });
-    }
-  } catch(e) { console.error("Erreur parsing tokenlist", e); }
-
-  // 4. Scan des créations de contrats (Blockscout)
-  try {
-    const intRes = await fetch(`${BLOCKSCOUT}?module=account&action=txlistinternal&address=${address}&page=1&offset=50`);
-    const intData = await intRes.json();
-    if (intData.status === "1" && Array.isArray(intData.result)) {
-      contractsDeployed = intData.result.filter(tx => tx.type === "create").length;
-    }
-  } catch(e) { console.error("Erreur parsing internaltx", e); }
-
-  // 5. Calcul de l'âge du portefeuille : récupération de la toute première TX (Blockscout)
-  try {
-    const txListRes = await fetch(`${BLOCKSCOUT}?module=account&action=txlist&address=${address}&page=1&offset=1&sort=asc`);
-    const txListData = await txListRes.json();
-    if (txListData.status === "1" && Array.isArray(txListData.result) && txListData.result.length > 0) {
-      const firstTxTimestamp = parseInt(txListData.result[0].timeStamp);
-      const currentTimestamp = Math.floor(Date.now() / 1000);
-      walletAgeDays = Math.floor((currentTimestamp - firstTxTimestamp) / (60 * 60 * 24));
-    }
-  } catch(e) { console.error("Erreur calcul âge portefeuille", e); }
-
-  // 6. Application du barème strict sur 100 points
-  let score = 0;
-
-  // Pilier A : Transactions (Max 25)
-  if (txCount > 100) score += 25;
-  else if (txCount > 20) score += 15;
-  else if (txCount > 0) score += 5;
-
-  // Pilier B : Contrats Déployés (Max 25)
-  if (contractsDeployed >= 2) score += 25;
-  else if (contractsDeployed === 1) score += 15;
-
-  // Pilier C : NFTs (Max 25)
-  if (nftCount > 25) score += 25;
-  else if (nftCount > 5) score += 15;
-  else if (nftCount > 0) score += 5;
-
-  // Pilier D : Anti-Sybil / Trust Score (Max 25 de base, soumis à déduction)
-  let trustPoints = 25;
-  if (walletAgeDays < 30) trustPoints -= 10; // Pénalité si le wallet a moins d'un mois
-  if (txCount < 5) trustPoints -= 10;        // Pénalité si activité vide (Sleep wallet)
-  if (ethBalance < 0.0005) trustPoints -= 5; // Pénalité si portefeuille sans poussière de gaz
-  score += Math.max(0, trustPoints);
-
-  // Détermination de l'état de vulnérabilité Sybil
-  let sybilRisk = "FAIBLE";
-  let sybilClass = "risk-low";
-  let sybilDesc = "Comportement on-chain organique et sain. Risque de filtre minime.";
-
-  if (trustPoints <= 5) {
-    sybilRisk = "ÉLEVÉ";
-    sybilClass = "risk-high";
-    sybilDesc = "Alerte : Portefeuille trop jeune, sous-financé ou inactif. Profil typique de bot.";
-  } else if (trustPoints < 20) {
-    sybilRisk = "MODÉRÉ";
-    sybilClass = "risk-medium";
-    sybilDesc = "Activité irrégulière détectée. Pense à intensifier tes interactions mensuelles.";
-  }
-
-  return {
-    ethBalance: ethBalance.toFixed(4),
-    txCount,
-    contractsDeployed,
-    tokenCount: erc20Count,
-    nftCount,
-    walletAgeDays,
-    score,
-    sybilRisk,
-    sybilClass,
-    sybilDesc
-  };
-}
-
-function getTierLabel(score) {
-  if (score >= 80) return 'TIER S — CONSTRUCTEUR';
-  if (score >= 50) return 'TIER A — UTILISATEUR AVANCÉ';
-  if (score >= 20) return 'TIER B — COMMUTER';
-  return 'TIER C — SYBIL SUSPECT';
-}
-
-async function analyzeWallet() {
-  const input = document.getElementById('addr-input');
-  const addr = input.value.trim();
-
-  if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) {
-    showError("Adresse invalide. Format requis : 0x + 40 caractères hexadécimaux.");
-    return;
-  }
-
-  const btn = document.getElementById('add-btn');
-  const emptyState = document.getElementById('empty-state');
-  const loadingState = document.getElementById('loading-state');
-  const reportTemplate = document.getElementById('report-template');
-
-  // UI Setup
-  btn.disabled = true;
-  btn.textContent = "Audit...";
-  clearError();
-  if (emptyState) emptyState.style.display = 'none';
-  reportTemplate.style.display = 'none';
-  loadingState.style.display = 'block';
-
-  try {
-    const data = await fetchDetailedData(addr);
-
-    // Injection des données dans le rapport individuel
-    document.getElementById('m-txs').innerHTML = data.txCount.toLocaleString();
-    document.getElementById('m-contracts').innerHTML = data.contractsDeployed;
-    document.getElementById('m-nfts').innerHTML = `${data.nftCount} <span>items</span>`;
-    document.getElementById('m-eth').innerHTML = `${data.ethBalance} <span>ETH</span>`;
-    document.getElementById('m-tokens').innerHTML = `${data.tokenCount} <span>actifs</span>`;
-    document.getElementById('m-age').innerHTML = `${data.walletAgeDays} <span>jours</span>`;
-    
-    // Config Score & Tiers
-    document.getElementById('final-score-val').innerText = data.score;
-    document.getElementById('tier-badge').innerText = getTierLabel(data.score);
-
-    // Config Sybil Badge
-    const badge = document.getElementById('sybil-risk-badge');
-    badge.className = `sybil-badge ${data.sybilClass}`;
-    badge.innerText = `RISQUE ${data.sybilRisk}`;
-    document.getElementById('sybil-explanation').innerText = data.sybilDesc;
-
-    // Switch des boîtes d'affichage
-    loadingState.style.display = 'none';
-    reportTemplate.style.display = 'flex';
-  } catch(e) {
-    loadingState.style.display = 'none';
-    if (emptyState) emptyState.style.display = 'block';
-    showError("Erreur d'analyse réseau : " + e.message);
-  }
-
-  btn.disabled = false;
-  btn.textContent = "+ Analyser";
-}
-
-function showError(msg) {
-  clearError();
-  const err = document.createElement('div');
-  err.className = 'error-msg'; err.id = 'err-msg';
-  err.textContent = '⚠ ' + msg;
-  document.querySelector('.search-section').after(err);
-}
-
-function clearError() { document.getElementById('err-msg')?.remove(); }
-
-document.getElementById('addr-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') analyzeWallet();
-});
-</script>
-</body>
-</html>
+@keyframes loadBar { 0% { width: 0; margin-left: 0; } 50% { width: 100%; margin-left: 0; } 100% {
