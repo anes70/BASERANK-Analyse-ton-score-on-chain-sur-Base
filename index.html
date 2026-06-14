@@ -128,9 +128,9 @@ body {
 .sybil-info-title { font-size: 0.85rem; font-weight: 600; }
 .sybil-info-desc { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 .risk-badge { font-size: 0.7rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; letter-spacing: 0.05em; }
-.risk-FAIBLE { background: rgba(0, 232, 122, 0.1); color: var(--green); border: 1px solid rgba(0, 232, 122, 0.2); }
-.risk-MODÉRÉ { background: rgba(245, 166, 35, 0.1); color: var(--amber); border: 1px solid rgba(245, 166, 35, 0.2); }
-.risk-ÉLEVÉ { background: rgba(255, 59, 92, 0.1); color: var(--red); border: 1px solid rgba(255, 59, 92, 0.2); }
+.risk-low { background: rgba(0, 232, 122, 0.1); color: var(--green); border: 1px solid rgba(0, 232, 122, 0.2); }
+.risk-medium { background: rgba(245, 166, 35, 0.1); color: var(--amber); border: 1px solid rgba(245, 166, 35, 0.2); }
+.risk-high { background: rgba(255, 59, 92, 0.1); color: var(--red); border: 1px solid rgba(255, 59, 92, 0.2); }
 
 /* Common States */
 .state-box { text-align: center; padding: 4rem 1rem; color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; }
@@ -145,4 +145,246 @@ body {
 .footer { margin-top: 3rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.7rem; color: var(--muted); }
 .footer a { color: var(--base-blue); text-decoration: none; }
 
-@keyframes loadBar { 0% { width: 0; margin-left: 0; } 50% { width: 100%; margin-left: 0; } 100% {
+@keyframes loadBar { 0% { width: 0; margin-left: 0; } 50% { width: 100%; margin-left: 0; } 100% { width: 0; margin-left: 100%; } }
+</style>
+</head>
+<body>
+
+  <div class="hero-banner">
+    <div class="wrap">
+      <div class="header-flex">
+        <div class="brand-box">
+          <div class="base-logo"><div class="base-logo-circle"></div></div>
+          <div>
+            <div class="title">Base Airdrop Simulator</div>
+            <div class="subtitle">Analyse d'activité on-chain normalisée — Mainnet</div>
+            <div class="author">✍ Rédigé par <a href="https://rainbow.me/irezroifer.base.eth" target="_blank">irezroifer.base.eth</a></div>
+          </div>
+        </div>
+        <div class="badge-speculative">⚠ Speculative</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="main-box">
+      
+      <div class="error-card" id="error-display"></div>
+
+      <div class="section-label">Wallet Address</div>
+      <div class="search-row">
+        <div class="input-wrap">
+          <input type="text" id="addr-input" placeholder="Entre une adresse de portefeuille Base (0x...)" maxlength="42" />
+        </div>
+        <button class="btn-analyze" id="add-btn" onclick="analyzeWallet()">Analyze →</button>
+      </div>
+
+      <div class="address-sub-bar" id="context-bar">
+        <div class="sub-bar-addr" id="sub-bar-wallet-address">0x000...0000</div>
+        <div class="sub-bar-right">
+          <div class="eth-badge" id="sub-bar-eth">0.0000 ETH</div>
+          <a href="#" target="_blank" class="link-basescan" id="sub-bar-link">Basescan ↗</a>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item active">Score Dashboard</div>
+        <div class="tab-item">USD Settings</div>
+        <div class="tab-item">On-Chain Data</div>
+      </div>
+
+      <div id="render-target">
+        <div class="state-box" id="empty-state">
+          <div class="state-icon">⬡</div>
+          <div>Aucun audit actif. Soumets une adresse pour simuler l'éligibilité.</div>
+        </div>
+      </div>
+
+      <div class="loading-box" id="loading-state">
+        <div id="loading-text">Analyse des blocs de transaction en cours...</div>
+        <div class="progress-line"><div class="progress-line-fill"></div></div>
+      </div>
+
+      <div class="report-layout" id="report-template">
+        
+        <div class="score-hero-box">
+          <div class="score-hero-left">
+            <div class="score-num" id="final-score-val">0</div>
+            <div class="score-max">Points d'activité accumulés / 100</div>
+          </div>
+          <div class="score-tier-label" id="tier-badge">TIER REQUIS</div>
+        </div>
+
+        <div class="sybil-status-box" id="sybil-card-box">
+          <div>
+            <div class="sybil-info-title">Profil de Sécurité Anti-Sybil</div>
+            <div class="sybil-info-desc" id="sybil-explanation">Examen des critères comportementaux.</div>
+          </div>
+          <div class="risk-badge" id="sybil-risk-badge">RISQUE</div>
+        </div>
+
+        <div class="section-label" style="margin-top:0.5rem;">Activity Criteria Status</div>
+        <div class="metrics-container">
+          <div class="metric-card">
+            <div class="m-title">Transactions Émises</div>
+            <div class="m-value" id="m-txs">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-title">Contrats Intelligents Déployés</div>
+            <div class="m-value" id="m-contracts">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-title">Objets ERC-721/1155 (NFTs)</div>
+            <div class="m-value" id="m-nfts">0 <span>items</span></div>
+          </div>
+          <div class="metric-card">
+            <div class="m-title">Actifs Écosystème (ERC-20)</div>
+            <div class="m-value" id="m-tokens">0 <span>tokens</span></div>
+          </div>
+          <div class="metric-card">
+            <div class="m-title">Ancienneté du Compte</div>
+            <div class="m-value" id="m-age">0 <span>jours</span></div>
+          </div>
+          <div class="metric-card">
+            <div class="m-title">Liquidité Résiduelle</div>
+            <div class="m-value" id="m-eth">0.0000 <span>ETH</span></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <div>Data Feed: Multi-Node Base RPC & <a href="https://base.blockscout.com" target="_blank">Blockscout Core</a></div>
+      <div>Engine Built by <strong><a href="https://rainbow.me/irezroifer.base.eth" target="_blank">irezroifer.base.eth</a></strong></div>
+    </div>
+  </div>
+
+<script>
+// Pool de secours anti-blocage (Rotation automatique si un RPC sature)
+const RPC_POOL = [
+  "https://mainnet.base.org",
+  "https://base.llamarpc.com",
+  "https://1rpc.io/base",
+  "https://base-mainnet.public.blastapi.io"
+];
+const BLOCKSCOUT = "https://base.blockscout.com/api";
+
+// Exécuteur RPC robuste avec fallback automatique
+async function rpc(method, params) {
+  for (const url of RPC_POOL) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s max par nœud
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.error) continue;
+      return data.result;
+    } catch (e) {
+      continue; // Erreur ou timeout, on passe au RPC suivant
+    }
+  }
+  throw new Error("Tous les serveurs RPC de Base sont saturés. Réessaye dans quelques secondes.");
+}
+
+async function fetchDetailedData(address) {
+  const balHex = await rpc("eth_getBalance", [address, "latest"]);
+  const ethBalance = parseInt(balHex, 16) / 1e18;
+
+  const nonceHex = await rpc("eth_getTransactionCount", [address, "latest"]);
+  const txCount = parseInt(nonceHex, 16);
+
+  let contractsDeployed = 0;
+  let erc20Count = 0;
+  let nftCount = 0;
+  let walletAgeDays = 0;
+
+  try {
+    const tokRes = await fetch(`${BLOCKSCOUT}?module=account&action=tokenlist&address=${address}`);
+    const tokData = await tokRes.json();
+    if (tokData.status === "1" && Array.isArray(tokData.result)) {
+      tokData.result.forEach(token => {
+        if (token.type === "ERC-721" || token.type === "ERC-1155") {
+          nftCount++;
+        } else {
+          erc20Count++;
+        }
+      });
+    }
+  } catch(e) {}
+
+  try {
+    const intRes = await fetch(`${BLOCKSCOUT}?module=account&action=txlistinternal&address=${address}&page=1&offset=50`);
+    const intData = await intRes.json();
+    if (intData.status === "1" && Array.isArray(intData.result)) {
+      contractsDeployed = intData.result.filter(tx => tx.type === "create").length;
+    }
+  } catch(e) {}
+
+  try {
+    const txListRes = await fetch(`${BLOCKSCOUT}?module=account&action=txlist&address=${address}&page=1&offset=1&sort=asc`);
+    const txListData = await txListRes.json();
+    if (txListData.status === "1" && Array.isArray(txListData.result) && txListData.result.length > 0) {
+      const firstTxTimestamp = parseInt(txListData.result[0].timeStamp);
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      walletAgeDays = Math.floor((currentTimestamp - firstTxTimestamp) / (60 * 60 * 24));
+    }
+  } catch(e) {}
+
+  let score = 0;
+  if (txCount > 100) score += 25;
+  else if (txCount > 20) score += 15;
+  else if (txCount > 0) score += 5;
+
+  if (contractsDeployed >= 2) score += 25;
+  else if (contractsDeployed === 1) score += 15;
+
+  if (nftCount > 25) score += 25;
+  else if (nftCount > 5) score += 15;
+  else if (nftCount > 0) score += 5;
+
+  let trustPoints = 25;
+  if (walletAgeDays < 30) trustPoints -= 10;
+  if (txCount < 5) trustPoints -= 10;
+  if (ethBalance < 0.0005) trustPoints -= 5;
+  score += Math.max(0, trustPoints);
+
+  let sybilRisk = "low";
+  let sybilLabel = "FAIBLE";
+  let sybilDesc = "Comportement on-chain organique et sain. Risque de détection minime.";
+
+  if (trustPoints <= 5) {
+    sybilRisk = "high";
+    sybilLabel = "ÉLEVÉ";
+    sybilDesc = "Alerte : Portefeuille trop jeune, sous-financé ou inactif.";
+  } else if (trustPoints < 20) {
+    sybilRisk = "medium";
+    sybilLabel = "MODÉRÉ";
+    sybilDesc = "Activité irrégulière. Renforce tes interactions mensuelles.";
+  }
+
+  return {
+    ethBalance: ethBalance.toFixed(4),
+    txCount,
+    contractsDeployed,
+    tokenCount: erc20Count,
+    nftCount,
+    walletAgeDays,
+    score,
+    sybilRisk,
+    sybilLabel,
+    sybilDesc
+  };
+}
+
+function getTierLabel(score)
